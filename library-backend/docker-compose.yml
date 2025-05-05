@@ -1,0 +1,79 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: librarydb
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - library_app2
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5  
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - library_app2
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/librarydb
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npm run seed && npm run start"
+    networks:
+      - library_app2
+
+  email-service:
+    build:
+      context: ../email-service
+    ports:
+      - '4000:4000'
+    command: sh -c "npm run start"
+    # depends_on:
+    #   app:
+    #     condition: service_healthy
+    networks:
+      - library_app2
+
+  cron-service:
+    build:
+      context: ../cron-service
+    command: sh -c "npm run start"
+    depends_on:
+      # app:
+      #   condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - library_app2
+
+volumes:
+  pgdata:
+
+networks:
+  library_app2:

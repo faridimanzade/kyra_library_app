@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "linux-musl-arm64-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Book {
+  id            String   @id @default(uuid())
+  title         String
+  authors       String[]
+  genres        String[]
+  sellPrice     Float
+
+  borrowPrice   Float
+  stockPrice    Float
+  copies        Int
+  initialCopies Int
+  actions       BookActions[]
+}
+
+model Wallet {
+  id        Int      @id @default(1)
+  balance   Float
+  movements WalletMovement[]
+}
+
+model WalletMovement {
+  id        String   @id @default(uuid())
+  amount    Float
+  type      MovementType
+  reason    String
+  createdAt DateTime @default(now())
+  walletId  Int
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+}
+
+model BookActions {
+  id        String   @id @default(uuid())
+  email     String
+  type      ActionType
+  copies    Int
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  createdAt DateTime @default(now())
+  returnedAt DateTime?
+  returned  Boolean? @default(false)
+}
+
+enum ActionType {
+  BORROW
+  BUY
+  RESTOCK
+}
+
+enum MovementType {
+  INCOME
+  EXPENSE
+}
+
+
