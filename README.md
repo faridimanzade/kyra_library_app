@@ -7,7 +7,7 @@ A modular, containerized backend for managing a library system. Built with Node.
 ## 📁 Project Structure
 
 ```
-Library_2/
+Library/
 ├── library-backend/          # Main application backend (REST API, services)
 │   ├── Kyra Library.postman_collection.json  # Postman API collection
 │   └── ...                   # Docker, Prisma, Jest tests, etc.
